@@ -1,0 +1,7 @@
+Countersign is MIT licensed (see LICENSE), with one exception:
+
+contracts/src/CountersignVerifier.sol derives from Chainlink CCIP v2.0 `BaseVerifier` and is therefore licensed under
+the Business Source License 1.1 of the CCIP v2.0 Licensed Work (SmartContract Chainlink Limited SEZC). Production use is
+permitted by Additional Use Grant 3(c) of that license: "developing an independent verifier implementation that
+conforms to the verifier interface". See node_modules/@chainlink/contracts-ccip/contracts/LICENSE.md and
+v2.0-CCIP-License-grants.md. The Change License (MIT) applies from April 1, 2030.

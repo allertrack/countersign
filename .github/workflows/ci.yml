@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: contracts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: foundry-rs/foundry-toolchain@v1
+      - run: npm ci --ignore-scripts
+      - run: forge fmt --check src test script
+      - name: Unit and fuzz tests
+        run: forge test --no-match-path 'test/fork/*' -vv
+      - name: Live-fork tests (CCIP v2 on Sepolia -> Arbitrum Sepolia)
+        env:
+          SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL }}
+          ARBITRUM_SEPOLIA_RPC_URL: ${{ secrets.ARBITRUM_SEPOLIA_RPC_URL }}
+        run: forge test --match-path 'test/fork/*' -vv
+
+  workflow:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: workflows/countersign
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun test
+      - name: Compile to WASM (same check as smartcontractkit/cre-templates CI)
+        run: bunx cre-compile main.ts && rm -f main.js main.wasm
+
+  offchain:
+    runs-on: ubuntu-latest
+    needs: workflow
+    strategy:
+      matrix:
+        package: [tools/executor, services/verifier-api]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Install workflow deps (shared MessageV1 decoder)
+        run: bun install --frozen-lockfile
+        working-directory: workflows/countersign
+      - run: bun install --frozen-lockfile
+        working-directory: ${{ matrix.package }}
+      - run: bun run typecheck
+        working-directory: ${{ matrix.package }}
+      - run: bun test
+        working-directory: ${{ matrix.package }}

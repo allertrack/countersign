@@ -1,0 +1,27 @@
+# ==========================================================================
+# CRE PROJECT SETTINGS — Countersign
+# ==========================================================================
+staging-settings:
+  rpcs:
+    - chain-name: ethereum-testnet-sepolia
+      url: https://ethereum-sepolia-rpc.publicnode.com
+    - chain-name: ethereum-testnet-sepolia-arbitrum-1
+      url: https://sepolia-rollup.arbitrum.io/rpc
+
+# ==========================================================================
+# Local anvil forks of the live CCIP v2 testnets (scripts/local-e2e.sh)
+local-settings:
+  rpcs:
+    - chain-name: ethereum-testnet-sepolia
+      url: http://127.0.0.1:8545
+    - chain-name: ethereum-testnet-sepolia-arbitrum-1
+      url: http://127.0.0.1:8546
+
+# ==========================================================================
+# Public testnets (scripts/testnet-e2e.sh). Override the RPCs with private endpoints if publicnode rate-limits.
+testnet-settings:
+  rpcs:
+    - chain-name: ethereum-testnet-sepolia
+      url: https://ethereum-sepolia-rpc.publicnode.com
+    - chain-name: ethereum-testnet-sepolia-arbitrum-1
+      url: https://sepolia-rollup.arbitrum.io/rpc

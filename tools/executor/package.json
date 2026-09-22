@@ -1,0 +1,20 @@
+{
+  "name": "@countersign/executor",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "bin": { "countersign-execute": "src/cli.ts" },
+  "scripts": {
+    "execute": "bun src/cli.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "viem": "2.34.0"
+  },
+  "devDependencies": {
+    "@types/bun": "1.3.0",
+    "typescript": "5.9.3"
+  }
+}

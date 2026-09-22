@@ -1,0 +1,43 @@
+{
+  "sources": [
+    {
+      "chainSelectorName": "ethereum-testnet-sepolia",
+      "verifier": "0x0000000000000000000000000000000000000001",
+      "onRamps": ["0x8dcf17f298c881A547D91ca4aA3C2AD7568C6777"]
+    }
+  ],
+  "destinations": [
+    {
+      "chainSelectorName": "ethereum-testnet-sepolia-arbitrum-1",
+      "verifier": "0x0000000000000000000000000000000000000002",
+      "gasLimit": "400000"
+    }
+  ],
+  "token": {
+    "mode": "burnMint",
+    "deployments": [
+      { "chainSelectorName": "ethereum-testnet-sepolia", "token": "0x0000000000000000000000000000000000000003" },
+      { "chainSelectorName": "ethereum-testnet-sepolia-arbitrum-1", "token": "0x0000000000000000000000000000000000000004" }
+    ],
+    "canonicalSupply": "2000000000000000000000000"
+  },
+  "policy": {
+    "version": "2026-09-22.1",
+    "supplyTolerance": "0",
+    "maxWindowOutflow": "50000000000000000000000",
+    "maxTransfersPerSender": 3,
+    "denylist": []
+  },
+  "sweep": { "schedule": "0 */2 * * * *", "lookbackBlocks": 100, "maxMessages": 3 },
+  "sentinel": {
+    "schedule": "30 */5 * * * *",
+    "guards": [
+      {
+        "chainSelectorName": "ethereum-testnet-sepolia-arbitrum-1",
+        "guard": "0x0000000000000000000000000000000000000005",
+        "pools": [{ "pool": "0x0000000000000000000000000000000000000006", "remoteChainSelectorNames": ["ethereum-testnet-sepolia"] }],
+        "gasLimit": "600000"
+      }
+    ]
+  }
+}

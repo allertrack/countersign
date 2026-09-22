@@ -1,0 +1,28 @@
+[profile.default]
+src = "src"
+test = "test"
+script = "script"
+out = "out"
+libs = ["node_modules", "lib"]
+solc_version = "0.8.26"
+evm_version = "paris"
+optimizer = true
+optimizer_runs = 10_000
+bytecode_hash = "none"
+fs_permissions = [
+  { access = "read-write", path = "./deployments" },
+  { access = "read-write", path = "./deployments-local" },
+]
+
+[rpc_endpoints]
+sepolia = "${SEPOLIA_RPC_URL}"
+arbitrum_sepolia = "${ARBITRUM_SEPOLIA_RPC_URL}"
+
+[fmt]
+tab_width = 2
+multiline_func_header = "params_first"
+sort_imports = true
+line_length = 120
+
+[lint]
+lint_on_build = false

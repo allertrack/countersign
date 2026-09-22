@@ -1,0 +1,20 @@
+# deps / build
+node_modules/
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+workflows/**/binary.wasm
+workflows/**/dist/
+workflows/**/.cre_build_tmp.js
+
+# local state
+contracts/deployments/*.json
+contracts/deployments-local/
+workflows/**/config.local.json
+.env
+*.env
+!.env.example
+workflows/**/main.js
+workflows/**/main.wasm
+workflows/**/config.testnet.json
+services/verifier-api/config.json
