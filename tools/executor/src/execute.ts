@@ -135,17 +135,18 @@ export async function executeMessage(opts: ExecuteOptions): Promise<ExecuteResul
 	}
 	if (!opts.privateKey) throw new Error('PRIVATE_KEY is required to send the execution transaction')
 
-	const wallet = createWalletClient({
-		account: privateKeyToAccount(opts.privateKey),
-		chain: dest.chain,
-		transport: http(dest.rpcUrl),
-	})
-	const executionTx = await wallet.writeContract({
+	const account = privateKeyToAccount(opts.privateKey)
+	const wallet = createWalletClient({ account, chain: dest.chain, transport: http(dest.rpcUrl) })
+	const call = {
 		address: offRamp,
 		abi: offRampAbi,
 		functionName: 'execute',
 		args: [encodedMessage, plan.ccvs, plan.verifierResults, 0],
-	})
+	} as const
+	// The OffRamp catches a failing message and still succeeds, so eth_estimateGas can settle on ~64/63 of a successful
+	// run, which leaves the token pool short of gas (message marked FAILURE). Pad the estimate; unused gas is refunded.
+	const estimate = await destClient.estimateContractGas({ ...call, account })
+	const executionTx = await wallet.writeContract({ ...call, gas: (estimate * 3n) / 2n })
 	await destClient.waitForTransactionReceipt({ hash: executionTx })
 	const finalState = await state()
 	log(`execute tx ${executionTx}: ${finalState}`)

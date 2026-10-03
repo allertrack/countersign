@@ -38,7 +38,7 @@ Researched on 2026-09-22. Re-check each program's page before applying; programs
 
 **Why Arbitrum.** Arbitrum is a primary destination for CCIP-bridged assets. Every protected transfer ends in an Arbitrum transaction (attestation plus execution), and the reference deployment and tests target the live CCIP v2 lane into Arbitrum Sepolia.
 
-**Stage and traction.** Working testnet system: contracts, CRE workflow, executor and verifier API; 96 automated tests including integration tests against the live CCIP v2 contracts on Sepolia → Arbitrum Sepolia; public testnet deployment and demo: `<links>`. Repository: `<GitHub URL>`.
+**Stage and traction.** Working testnet system: contracts, CRE workflow, executor and verifier API; 99 automated tests including integration tests against the live CCIP v2 contracts on Sepolia → Arbitrum Sepolia; a live end-to-end transfer on public testnets ([transactions](https://github.com/allertrack/countersign#live-on-public-testnets)). Repository: https://github.com/allertrack/countersign.
 
 **Milestones** (adjust amounts to the track on the form):
 
@@ -58,7 +58,7 @@ Researched on 2026-09-22. Re-check each program's page before applying; programs
 
 > Subject: Countersign: an issuer CCV for CCIP v2 built on CRE (open source, testnet live)
 >
-> Hi <name>, we built Countersign, a Cross-Chain Verifier for CCIP v2 whose offchain component is a CRE workflow, so token issuers can require their own verification on top of the committee without running verifier infrastructure. It uses threshold CCVs in `AdvancedPoolHooks`, stores DON-signed attestations through the KeystoneForwarder, serves the CCV Verifier Result API, and includes a tighten-only `rateLimitAdmin` for v2 pools. Live on Sepolia → Arbitrum Sepolia, 96 tests including fork tests against the v2 contracts. Repo: <link>. Demo: <link>.
+> Hi <name>, we built Countersign, a Cross-Chain Verifier for CCIP v2 whose offchain component is a CRE workflow, so token issuers can require their own verification on top of the committee without running verifier infrastructure. It uses threshold CCVs in `AdvancedPoolHooks`, stores DON-signed attestations through the KeystoneForwarder, serves the CCV Verifier Result API, and includes a tighten-only `rateLimitAdmin` for v2 pools. Live on Sepolia → Arbitrum Sepolia, 99 tests including fork tests against the v2 contracts. Repo: <link>. Demo: <link>.
 >
 > Two things we noticed while building it that may help other integrators: (1) `RateLimiter._setTokenBucketConfig` refills the bucket to full capacity on every update, so an automated breaker that "lowers" limits during a drain can hand the attacker a fresh bucket; our guard clamps to the live token count. (2) The `MockKeystoneForwarder` sends no metadata, so receivers that pin a workflow identity cannot be simulated; we added an explicit simulation mode.
 >

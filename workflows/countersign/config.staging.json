@@ -10,7 +10,7 @@
     {
       "chainSelectorName": "ethereum-testnet-sepolia-arbitrum-1",
       "verifier": "0x0000000000000000000000000000000000000002",
-      "gasLimit": "400000"
+      "gasLimit": "2000000"
     }
   ],
   "token": {
@@ -36,7 +36,7 @@
         "chainSelectorName": "ethereum-testnet-sepolia-arbitrum-1",
         "guard": "0x0000000000000000000000000000000000000005",
         "pools": [{ "pool": "0x0000000000000000000000000000000000000006", "remoteChainSelectorNames": ["ethereum-testnet-sepolia"] }],
-        "gasLimit": "600000"
+        "gasLimit": "1500000"
       }
     ]
   }

@@ -37,6 +37,14 @@ echo "Sepolia: $(cast from-wei "$SEP_BAL") ETH   Arbitrum Sepolia: $(cast from-w
 python -c "import sys; sys.exit(0 if int('$SEP_BAL') >= 5*10**16 and int('$ARB_BAL') >= 10**16 else 1)" ||
   { echo "Fund the wallet first (>= 0.05 Sepolia ETH, >= 0.01 Arbitrum Sepolia ETH): https://faucets.chain.link" >&2; exit 1; }
 
+# Glamsterdam reprices state creation on Sepolia from 2026-10-06 13:53:36 UTC (EIP-8037/8038): ~7.6x per deployed
+# byte, ~5x per new storage slot. forge only simulates with the new prices when asked; otherwise its gas limits run out.
+SEP_FORGE=()
+if (( $(cast block latest -f timestamp --rpc-url "$SEP_RPC") >= 1791294816 )); then
+  SEP_FORGE=(--hardfork amsterdam)
+  echo "Sepolia is on Glamsterdam: forge simulates Sepolia transactions with --hardfork amsterdam"
+fi
+
 VERIFY=()
 [[ -n "${ETHERSCAN_API_KEY:-}" ]] && VERIFY=(--verify --etherscan-api-key "$ETHERSCAN_API_KEY")
 run() { forge script script/Countersign.s.sol:CountersignScript "$@" --broadcast --slow; }
@@ -52,16 +60,19 @@ deployed() { # chain-id rpc
 
 step "1. Deploy (CRE simulation forwarders) and connect"
 if [[ "${REDEPLOY:-0}" == "1" ]] || ! deployed 11155111 "$SEP_RPC" || ! deployed 421614 "$ARB_RPC"; then
-  CRE_SIMULATION=true CRE_FORWARDER=0x15fC6ae953E024d975e77382eEeC56A9101f9F88 run --sig "deploy()" --rpc-url "$SEP_RPC" "${VERIFY[@]}"
+  if (( ${#SEP_FORGE[@]} )) && python -c "import sys; sys.exit(0 if int('$SEP_BAL') < 3*10**17 else 1)"; then
+    echo "Deploying on Sepolia after Glamsterdam costs ~0.15 ETH at 1 gwei: fund >= 0.3 Sepolia ETH first." >&2; exit 1
+  fi
+  CRE_SIMULATION=true CRE_FORWARDER=0x15fC6ae953E024d975e77382eEeC56A9101f9F88 run --sig "deploy()" --rpc-url "$SEP_RPC" "${SEP_FORGE[@]}" "${VERIFY[@]}"
   CRE_SIMULATION=true CRE_FORWARDER=0xd41263567ddfead91504199b8c6c87371e83ca5d run --sig "deploy()" --rpc-url "$ARB_RPC" "${VERIFY[@]}"
-  run --sig "connect(uint256)" 421614 --rpc-url "$SEP_RPC"
+  run --sig "connect(uint256)" 421614 --rpc-url "$SEP_RPC" "${SEP_FORGE[@]}"
   run --sig "connect(uint256)" 11155111 --rpc-url "$ARB_RPC"
 else
   echo "Reusing deployments/11155111.json and deployments/421614.json (REDEPLOY=1 to start over)"
 fi
 
 step "2. ccipSend $(cast from-wei "$AMOUNT") CST Sepolia -> Arbitrum Sepolia"
-run --sig "send(uint256,uint256)" 421614 "$AMOUNT" --rpc-url "$SEP_RPC"
+run --sig "send(uint256,uint256)" 421614 "$AMOUNT" --rpc-url "$SEP_RPC" "${SEP_FORGE[@]}"
 TX=$(python -c "import json;d=json.load(open('broadcast/Countersign.s.sol/11155111/send-latest.json'));print([t['hash'] for t in d['transactions'] if 'ccipSend' in (t.get('function') or '')][0])" | tr -d '\r')
 SRC_VERIFIER=$(json deployments/11155111.json verifier)
 read -r EVENT_INDEX TX_BLOCK MESSAGE_ID < <(cast receipt "$TX" --rpc-url "$SEP_RPC" --json | python -c "

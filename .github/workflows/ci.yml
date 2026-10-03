@@ -26,8 +26,9 @@ jobs:
         run: forge test --no-match-path 'test/fork/*' -vv
       - name: Live-fork tests (CCIP v2 on Sepolia -> Arbitrum Sepolia)
         env:
-          SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL }}
-          ARBITRUM_SEPOLIA_RPC_URL: ${{ secrets.ARBITRUM_SEPOLIA_RPC_URL }}
+          # An unset secret is an empty string, which vm.envOr would return instead of its public default.
+          SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com' }}
+          ARBITRUM_SEPOLIA_RPC_URL: ${{ secrets.ARBITRUM_SEPOLIA_RPC_URL || 'https://sepolia-rollup.arbitrum.io/rpc' }}
         run: forge test --match-path 'test/fork/*' -vv
 
   workflow:
@@ -59,6 +60,9 @@ jobs:
       - name: Install workflow deps (shared MessageV1 decoder)
         run: bun install --frozen-lockfile
         working-directory: workflows/countersign
+      - name: Install executor deps (chain config shared with the verifier API)
+        run: bun install --frozen-lockfile
+        working-directory: tools/executor
       - run: bun install --frozen-lockfile
         working-directory: ${{ matrix.package }}
       - run: bun run typecheck

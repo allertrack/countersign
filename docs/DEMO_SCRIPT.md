@@ -11,6 +11,6 @@ Record after running `scripts/testnet-e2e.sh` once (so the stack exists), then r
 | 2:10–2:40 | Step 4b: executor refusing, then `releaseHold` | "The executor refuses: the pool will not mint without Countersign. Only the issuer's guardian multisig can release a hold. The workflow itself can never loosen anything." |
 | 2:40–3:20 | Step 5: executor fetching committee signatures from Chainlink's indexer, execution SUCCESS, CST balance on Arbitrum, Arbiscan events | "Execution is permissionless: committee signatures come from Chainlink's public indexer, Countersign's proof is already onchain. Two independent verifier networks agreed, so the tokens are minted." |
 | 3:20–3:45 | `RateLimitGuard.sol` doc comment, then `test_ClampsToLiveTokens_AfterDrain` passing | "If supply ever breaks, the sentinel freezes the lanes. CCIP v2 refills a bucket when you change its limits; a naive breaker would hand an attacker a fresh bucket. Our guard clamps to what is left." |
-| 3:45–4:00 | `make test` summary (96 passing) and the repo URL | "Open source, 96 tests including live CCIP v2 fork tests, zero servers for the issuer. Countersign: make every bridge transfer need a second signature." |
+| 3:45–4:00 | `make test` summary (99 passing) and the repo URL | "Open source, 99 tests including live CCIP v2 fork tests, zero servers for the issuer. Countersign: make every bridge transfer need a second signature." |
 
 Tips: 1080p, terminal font 16+, cut the finality wait (about 13 minutes on Sepolia), show transaction links on screen.

@@ -122,7 +122,7 @@ describe('log trigger: per-message verification', () => {
 	test('holds a message whose decoded lane disagrees with the event', () => {
 		const log = requestLog({ destChainSelector: 10344971235874465080n }) // Base Sepolia, not Arbitrum
 		const config = baseConfig({
-			destinations: [{ chainSelectorName: 'ethereum-testnet-sepolia-base-1', verifier: DEST_VERIFIER, gasLimit: '400000' }],
+			destinations: [{ chainSelectorName: 'ethereum-testnet-sepolia-base-1', verifier: DEST_VERIFIER, gasLimit: '2000000' }],
 		})
 		const sepolia = wireChain(SEPOLIA, healthySource())
 		wireChain(ARB_SEPOLIA, healthyDest())
@@ -254,7 +254,7 @@ describe('sentinel: global invariant circuit breaker', () => {
 						chainSelectorName: 'ethereum-testnet-sepolia-arbitrum-1',
 						guard: ARB_GUARD,
 						pools: [{ pool: ARB_POOL, remoteChainSelectorNames: ['ethereum-testnet-sepolia'] }],
-						gasLimit: '600000',
+						gasLimit: '1500000',
 					},
 				],
 			},
@@ -303,13 +303,13 @@ describe('sentinel: failure isolation', () => {
 						chainSelectorName: 'ethereum-testnet-sepolia-arbitrum-1',
 						guard: ARB_GUARD,
 						pools: [{ pool: ARB_POOL, remoteChainSelectorNames: ['ethereum-testnet-sepolia'] }],
-						gasLimit: '600000',
+						gasLimit: '1500000',
 					},
 					{
 						chainSelectorName: 'ethereum-testnet-sepolia',
 						guard: SEP_GUARD,
 						pools: [{ pool: SEP_POOL, remoteChainSelectorNames: ['ethereum-testnet-sepolia-arbitrum-1'] }],
-						gasLimit: '600000',
+						gasLimit: '1500000',
 					},
 				],
 			},
@@ -344,5 +344,45 @@ describe('config', () => {
 				sweep: { schedule: '0 * * * * *', lookbackBlocks: 100, maxMessages: 4 },
 			} as Partial<Config>),
 		).toThrow('chain reads')
+	})
+
+	test('defaults write gas limits to Glamsterdam-safe values', () => {
+		const config = baseConfig({
+			sentinel: {
+				schedule: '0 */5 * * * *',
+				guards: [
+					{ chainSelectorName: 'ethereum-testnet-sepolia', guard: ARB_GUARD, pools: [{ pool: ARB_POOL, remoteChainSelectorNames: ['ethereum-testnet-sepolia-arbitrum-1'] }] },
+				],
+			},
+		} as Partial<Config>)
+		expect(config.destinations[0].gasLimit).toBe('2000000')
+		expect(config.sentinel?.guards[0].gasLimit).toBe('1500000')
+	})
+
+	test('rejects a sentinel gas limit too low to freeze every configured lane', () => {
+		const guard = (gasLimit: string) => ({
+			sentinel: {
+				schedule: '0 */5 * * * *',
+				guards: [
+					{
+						chainSelectorName: 'ethereum-testnet-sepolia',
+						guard: ARB_GUARD,
+						pools: [{ pool: ARB_POOL, remoteChainSelectorNames: ['ethereum-testnet-sepolia-arbitrum-1', 'ethereum-testnet-sepolia-base-1'] }],
+						gasLimit,
+					},
+				],
+			},
+		})
+		expect(() => baseConfig(guard('600000') as Partial<Config>)).toThrow('needed to freeze 2 lane(s)')
+		expect(() => baseConfig(guard('1999999') as Partial<Config>)).toThrow('needed to freeze 2 lane(s)')
+		expect(baseConfig(guard('2000000') as Partial<Config>).sentinel?.guards[0].gasLimit).toBe('2000000')
+	})
+
+	test('rejects write gas limits above the CRE per-transaction quota', () => {
+		expect(() =>
+			baseConfig({
+				destinations: [{ chainSelectorName: 'ethereum-testnet-sepolia-arbitrum-1', verifier: DEST_VERIFIER, gasLimit: '10000001' }],
+			} as Partial<Config>),
+		).toThrow('CRE quota')
 	})
 })

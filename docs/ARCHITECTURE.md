@@ -63,6 +63,7 @@ The workflow respects the published [CRE service quotas](https://docs.chain.link
 - `PerWorkflow.ChainRead.CallLimit` = 15 reads per execution.
 - `ChainRead.LogQueryBlockLimit` = 100 blocks. That is why the rolling window lives onchain in the verifier (100 blocks is 25 s on Arbitrum).
 - `LogTrigger.EventRateLimit` = 10 per 6 s. Hence the source-side anti-spam.
+- `ChainWrite.EVM.TransactionGasLimit` = 10,000,000 gas per write. Write limits are sized for Glamsterdam pricing ([operations](OPERATIONS.md#5-ethereum-glamsterdam-gas-repricing)).
 - The sweep picks one source per run from a hash of the cron slot, so every source is reached whatever the interval.
 
 ## Why the attestation is stored onchain

@@ -33,11 +33,12 @@ Countersign: an issuer-run Cross-Chain Verifier for CCIP v2 built on CRE. Every 
 
 **What is new.** The first CCV built on CRE; issuer-defined checks enforced per message instead of monitored after the fact; a clamp-only rate-limit admin that avoids CCIP v2's refill-on-update footgun; the standard CCV Verifier Result API; an executor that works from public data only.
 
-**Proof.** 96 automated tests, including fork tests against the live CCIP v2 OnRamp/OffRamp on Sepolia → Arbitrum Sepolia; public testnet run with `scripts/testnet-e2e.sh`; video: `<link>`.
+**Proof.** 99 automated tests, including fork tests against the live CCIP v2 OnRamp/OffRamp on Sepolia → Arbitrum Sepolia; a live end-to-end transfer on public testnets ([transactions](https://github.com/allertrack/countersign#live-on-public-testnets)); video: https://youtu.be/FKoKNaHxgg0.
 
 ## Checklist
 
 - [ ] Repo public, CI green
-- [ ] `scripts/testnet-e2e.sh` and `DEMO_HOLD=1` run on public testnets; transaction links in the README
-- [ ] Video (≤ 5 min, public) following [DEMO_SCRIPT.md](DEMO_SCRIPT.md)
+- [x] `scripts/testnet-e2e.sh` run on public testnets; transaction links in the README
+- [x] `DEMO_HOLD=1` run on public testnets
+- [x] Video (2 min): https://youtu.be/FKoKNaHxgg0
 - [ ] Event-period changes listed in the submission

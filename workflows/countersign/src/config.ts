@@ -6,6 +6,14 @@ const uintString = z.string().regex(/^\d+$/, 'expected a base-10 integer string'
 const LOG_QUERY_BLOCK_LIMIT = 100
 /** CRE: PerWorkflow.ChainRead.CallLimit. */
 const CHAIN_READ_LIMIT = 15
+/** CRE: PerWorkflow.ChainWrite.EVM.TransactionGasLimit. */
+const TX_GAS_QUOTA = 10_000_000n
+/**
+ * Sentinel write budget. Under Glamsterdam (EIP-8037/8038) a new storage slot costs ~110k gas, and freezing one lane
+ * creates up to 4. RateLimitGuard catches pool failures, so an underfunded freeze succeeds onchain without freezing.
+ */
+export const SENTINEL_GAS_FIRST_LANE = 1_500_000n
+export const SENTINEL_GAS_PER_EXTRA_LANE = 500_000n
 
 const deployment = z.object({
 	chainSelectorName: z.string(),
@@ -33,7 +41,8 @@ export const configSchema = z
 				z.object({
 					chainSelectorName: z.string(),
 					verifier: address,
-					gasLimit: uintString.default('400000'),
+					/** Covers a sweep batch of 4 attestations (9 new slots) under Glamsterdam pricing with headroom. */
+					gasLimit: uintString.default('2000000'),
 				}),
 			)
 			.min(1)
@@ -98,7 +107,7 @@ export const configSchema = z
 									remoteChainSelectorNames: z.array(z.string()).min(1),
 								}),
 							),
-							gasLimit: uintString.default('600000'),
+							gasLimit: uintString.default(SENTINEL_GAS_FIRST_LANE.toString()),
 						}),
 					)
 					.min(1)
@@ -117,6 +126,25 @@ export const configSchema = z
 		const sweepReads = 2 + config.destinations.length + supplyReads + 2
 		if (config.sweep && sweepReads > CHAIN_READ_LIMIT) {
 			ctx.addIssue({ code: z.ZodIssueCode.custom, message: `sweep needs at least ${sweepReads} chain reads (> 15)` })
+		}
+		const writes = [
+			...config.destinations.map((d) => ({ what: `destination ${d.chainSelectorName}`, gasLimit: BigInt(d.gasLimit) })),
+			...(config.sentinel?.guards ?? []).map((g) => ({ what: `guard ${g.chainSelectorName}`, gasLimit: BigInt(g.gasLimit) })),
+		]
+		for (const { what, gasLimit } of writes) {
+			if (gasLimit > TX_GAS_QUOTA) {
+				ctx.addIssue({ code: z.ZodIssueCode.custom, message: `${what}: gasLimit ${gasLimit} > CRE quota ${TX_GAS_QUOTA}` })
+			}
+		}
+		for (const guard of config.sentinel?.guards ?? []) {
+			const lanes = guard.pools.reduce((n, p) => n + p.remoteChainSelectorNames.length, 0)
+			const needed = SENTINEL_GAS_FIRST_LANE + SENTINEL_GAS_PER_EXTRA_LANE * BigInt(Math.max(lanes - 1, 0))
+			if (BigInt(guard.gasLimit) < needed) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: `guard ${guard.chainSelectorName}: gasLimit ${guard.gasLimit} < ${needed} needed to freeze ${lanes} lane(s)`,
+				})
+			}
 		}
 	})
 

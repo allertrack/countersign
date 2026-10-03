@@ -17,6 +17,10 @@ ONRAMPS = {
 }
 CHAIN_IDS = {"ethereum-testnet-sepolia": "11155111", "ethereum-testnet-sepolia-arbitrum-1": "421614"}
 E18 = 10**18
+# Write gas limits sized for Glamsterdam pricing (EIP-8037/8038); see docs/OPERATIONS.md and workflows config.ts.
+ATTESTATION_GAS = 2_000_000
+SENTINEL_GAS_FIRST_LANE = 1_500_000
+SENTINEL_GAS_PER_EXTRA_LANE = 500_000
 
 
 def main() -> None:
@@ -26,10 +30,11 @@ def main() -> None:
     api_out = sys.argv[4] if len(sys.argv) > 4 else None
     d = {name: json.load(open(os.path.join(deployments_dir, f"{cid}.json"))) for name, cid in CHAIN_IDS.items()}
     names = list(CHAIN_IDS)
+    lanes = len(names) - 1  # each guard freezes its pool's lane to every other chain
 
     config = {
         "sources": [{"chainSelectorName": n, "verifier": d[n]["verifier"], "onRamps": ONRAMPS[n]} for n in names],
-        "destinations": [{"chainSelectorName": n, "verifier": d[n]["verifier"], "gasLimit": "400000"} for n in names],
+        "destinations": [{"chainSelectorName": n, "verifier": d[n]["verifier"], "gasLimit": str(ATTESTATION_GAS)} for n in names],
         "token": {
             "mode": "burnMint",
             # Each side pre-mints 1,000,000 CST to the deployer (see Countersign.s.sol).
@@ -51,7 +56,7 @@ def main() -> None:
                     "chainSelectorName": n,
                     "guard": d[n]["rateLimitGuard"],
                     "pools": [{"pool": d[n]["pool"], "remoteChainSelectorNames": [m for m in names if m != n]}],
-                    "gasLimit": "600000",
+                    "gasLimit": str(SENTINEL_GAS_FIRST_LANE + SENTINEL_GAS_PER_EXTRA_LANE * (lanes - 1)),
                 }
                 for n in names
             ],
